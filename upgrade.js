@@ -127,7 +127,9 @@ class Game {
         this.scores = [0, 0];  // 两队分数
         this.trickScores = [0, 0];  // 当前局分数
         
+        // 在构造函数中调用初始化方法
         this.initGame();
+        this.setupEventListeners();  // 添加事件监听器
     }
 
     initGame() {
@@ -137,226 +139,6 @@ class Game {
         this.startAITurn();
     }
 
-    createDeck() {
-        const deck = [];
-        const suits = ['♠', '♥', '♣', '♦'];
-        // 创建两副牌
-        for (let i = 0; i < 2; i++) {
-            for (let suit of suits) {
-                for (let rank = 1; rank <= 13; rank++) {
-                    deck.push(new Card(suit, rank));
-                }
-            }
-            deck.push(new Card(null, 16, true));  // 大王
-            deck.push(new Card(null, 15, true));  // 小王
-        }
-        return this.shuffle(deck);
-    }
-
-    dealCards(deck) {
-        // 每人25张牌，8张底牌
-        for (let i = 0; i < deck.length - 8; i++) {
-            this.players[i % 4].cards.push(deck[i]);
-        }
-        this.bottomCards = deck.slice(-8);
-        
-        // 整理手牌
-        this.players.forEach(player => this.sortCards(player.cards));
-    }
-
-    sortCards(cards) {
-        cards.sort((a, b) => {
-            if (a.isJoker && b.isJoker) return b.rank - a.rank;
-            if (a.isJoker) return -1;
-            if (b.isJoker) return 1;
-            if (a.suit === b.suit) return a.rank - b.rank;
-            return ['♠', '♥', '♣', '♦'].indexOf(a.suit) - ['♠', '♥', '♣', '♦'].indexOf(b.suit);
-        });
-    }
-
-    handleCardClick(playerIndex, cardIndex) {
-        const player = this.players[playerIndex];
-        const card = player.cards[cardIndex];
-
-        if (this.currentPhase === 'bidding') {
-            if (this.canBid(card)) {
-                this.bid(player, cardIndex);
-            }
-        } else if (this.currentPhase === 'playing') {
-            if (this.isValidPlay(player, card)) {
-                this.playCard(playerIndex, cardIndex);
-            }
-        }
-    }
-
-    canBid(card) {
-        return card.isJoker || [2, 3, 5].includes(card.rank);
-    }
-
-    bid(player, cardIndex) {
-        const card = player.cards[cardIndex];
-        this.trumpSuit = card.suit;
-        this.trumpRank = card.rank;
-        
-        if (card.isJoker) {
-            player.hiddenCards.push(...player.cards.splice(cardIndex, 1));
-            // 庄家可以看底牌
-            if (player.position === this.dealer) {
-                this.bottomCards.forEach(card => player.cards.push(card));
-                this.sortCards(player.cards);
-            }
-        }
-        
-        this.currentPhase = 'playing';
-        this.renderGame();
-        this.startAITurn();
-    }
-
-    isValidPlay(player, card) {
-        if (this.currentTrick.length === 0) return true;
-        
-        const firstCard = this.currentTrick[0].card;
-        const hasSameSuit = player.cards.some(c => c.suit === firstCard.suit);
-        
-        return !hasSameSuit || card.suit === firstCard.suit;
-    }
-
-    playCard(playerIndex, cardIndex) {
-        const player = this.players[playerIndex];
-        const card = player.cards.splice(cardIndex, 1)[0];
-        
-        this.currentTrick.push({
-            player: playerIndex,
-            card: card
-        });
-        
-        if (this.currentTrick.length === 4) {
-            this.evaluateTrick();
-        } else {
-            this.currentPlayer = (this.currentPlayer + 1) % 4;
-            this.startAITurn();
-        }
-        
-        this.renderGame();
-    }
-
-    evaluateTrick() {
-        let winner = 0;
-        let winningCard = this.currentTrick[0];
-        
-        // 找出最大的牌
-        for (let i = 1; i < this.currentTrick.length; i++) {
-            if (this.compareCards(this.currentTrick[i].card, winningCard.card)) {
-                winner = i;
-                winningCard = this.currentTrick[i];
-            }
-        }
-        
-        // 计算分数
-        let trickScore = 0;
-        this.currentTrick.forEach(play => {
-            if (play.card.isScoreCard()) {
-                trickScore += play.card.rank === 5 ? 5 : 10;
-            }
-        });
-        
-        // 添加到获胜方的分数
-        this.trickScores[this.players[winner].team] += trickScore;
-        
-        // 清空当前轮
-        this.currentTrick = [];
-        this.currentPlayer = winner;
-        
-        // 检查是否结束当前局
-        if (this.players.every(p => p.cards.length === 0)) {
-            this.endRound();
-        } else {
-            this.startAITurn();
-        }
-        
-        this.renderGame();
-    }
-
-    compareCards(card1, card2) {
-        const isTrump1 = this.isTrump(card1);
-        const isTrump2 = this.isTrump(card2);
-        
-        if (isTrump1 && !isTrump2) return true;
-        if (!isTrump1 && isTrump2) return false;
-        
-        if (isTrump1 && isTrump2) {
-            if (card1.isJoker && card2.isJoker) return card1.rank > card2.rank;
-            if (card1.isJoker) return true;
-            if (card2.isJoker) return false;
-            return card1.rank > card2.rank;
-        }
-        
-        if (card1.suit === card2.suit) {
-            return card1.rank > card2.rank;
-        }
-        
-        return false;
-    }
-
-    isTrump(card) {
-        return card.isJoker || 
-               card.suit === this.trumpSuit || 
-               card.rank === this.trumpRank;
-    }
-
-    endRound() {
-        // 计算最终分数
-        if (this.trickScores[this.dealer % 2] >= 80) {
-            // 庄家队升级
-            this.currentLevel++;
-        } else {
-            // 对方队升级
-            this.currentLevel++;
-        }
-        
-        // 更新总分
-        this.scores[0] += this.trickScores[0];
-        this.scores[1] += this.trickScores[1];
-        
-        // 重置当前局
-        this.trickScores = [0, 0];
-        this.dealer = (this.dealer + 1) % 4;
-        this.currentPlayer = this.dealer;
-        this.currentPhase = 'bidding';
-        this.trumpSuit = null;
-        this.trumpRank = null;
-        
-        // 开始新的一局
-        this.initGame();
-    }
-
-    startAITurn() {
-        if (this.players[this.currentPlayer].isAI) {
-            setTimeout(() => {
-                const player = this.players[this.currentPlayer];
-                const card = player.getAIPlay(this);
-                if (card) {
-                    const cardIndex = player.cards.indexOf(card);
-                    if (this.currentPhase === 'bidding') {
-                        this.bid(player, cardIndex);
-                    } else {
-                        this.playCard(this.currentPlayer, cardIndex);
-                    }
-                }
-            }, 1000);
-        }
-    }
-    // 添加事件监听器设置
-    setupEventListeners() {
-        // 监听卡牌点击
-        document.querySelectorAll('.card').forEach(card => {
-            card.addEventListener('click', (e) => {
-                const playerIndex = parseInt(e.target.dataset.playerIndex);
-                const cardIndex = parseInt(e.target.dataset.cardIndex);
-                this.handleCardClick(playerIndex, cardIndex);
-            });
-        });
-    }
     renderGame() {
         // 渲染玩家手牌
         this.players.forEach((player, index) => {
@@ -386,6 +168,22 @@ class Game {
                 container.appendChild(cardElement);
             });
         });
+
+        // 渲染当前出牌
+        this.currentTrick.forEach(play => {
+            const trickCard = document.getElementById(`trick-${['north', 'east', 'south', 'west'][play.player]}`);
+            if (trickCard) {
+                trickCard.textContent = play.card.toString();
+                trickCard.className = `trick-card ${['north', 'east', 'south', 'west'][play.player]}${play.card.suit === '♥' || play.card.suit === '♦' ? ' red' : ''}`;
+            }
+        });
+
+        // 更新信息面板
+        document.getElementById('level').textContent = this.currentLevel;
+        document.getElementById('trump').textContent = this.trumpSuit ? `${this.trumpSuit}${this.trumpRank}` : '等待叫主';
+        document.getElementById('current-player').textContent = this.players[this.currentPlayer].name;
+        document.getElementById('score-ns').textContent = this.scores[0];
+        document.getElementById('score-ew').textContent = this.scores[1];
     }
 }
 
