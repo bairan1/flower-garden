@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>梦幻花园装扮</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #ffe6f2;
+            font-family: Arial, sans-serif;
+        }
+        #gameCanvas {
+            border: 2px solid #ff99cc;
+            border-radius: 10px;
+            margin: 20px;
+        }
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #ff99cc;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #ff80bf;
+        }
+    </style>
+</head>
+<body>
+    <h1>梦幻花园装扮</h1>
+    <div class="toolbar">
+        <button onclick="selectItem('flower1')">玫瑰花</button>
+        <button onclick="selectItem('flower2')">向日葵</button>
+        <button onclick="selectItem('flower3')">郁金香</button>
+        <button onclick="clearCanvas()">重新开始</button>
+    </div>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <script src="game.js"></script>
+</body>
+</html>
