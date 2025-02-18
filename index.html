@@ -25,95 +25,103 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 800px;
-            height: 600px;
+            width: 1000px;  /* 增加桌子尺寸 */
+            height: 700px;
             background: #2d662d;
-            border-radius: 200px;
+            border-radius: 50px;
             border: 20px solid #133913;
             box-shadow: 0 0 50px rgba(0,0,0,0.5);
         }
         
         .player {
             position: absolute;
-            width: 100px;
-            height: 100px;
-            background: white;
+            width: 80px;
+            height: 80px;
+            background: #fff;
             border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 20px;
+            font-size: 18px;
             box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            z-index: 10;
         }
         
-        .player.north { top: -50px; left: 350px; }
-        .player.east { right: -50px; top: 250px; }
-        .player.south { bottom: -50px; left: 350px; }
-        .player.west { left: -50px; top: 250px; }
+        .player.north { top: 10px; left: 460px; }
+        .player.east { right: 10px; top: 310px; }
+        .player.south { bottom: 10px; left: 460px; }
+        .player.west { left: 10px; top: 310px; }
         
         .cards-area {
             position: absolute;
             display: flex;
-            gap: 5px;
+            gap: 2px;  /* 减小牌间距 */
             padding: 10px;
+            z-index: 5;
         }
         
-        .cards-area.north { top: 80px; left: 200px; }
-        .cards-area.east { right: 80px; top: 200px; transform: rotate(90deg); }
-        .cards-area.south { bottom: 80px; left: 200px; }
-        .cards-area.west { left: 80px; top: 200px; transform: rotate(-90deg); }
-        
-        .info-panel {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            font-size: 16px;
-            z-index: 100;
-        }
-        
-        .info-panel div {
-            margin: 5px 0;
-        }
+        .cards-area.north { top: 100px; left: 250px; }
+        .cards-area.east { right: 100px; top: 250px; transform: rotate(90deg); transform-origin: right center; }
+        .cards-area.south { bottom: 100px; left: 250px; }
+        .cards-area.west { left: 100px; top: 250px; transform: rotate(-90deg); transform-origin: left center; }
         
         .card {
-            width: 60px;
-            height: 90px;
+            width: 40px;  /* 减小牌的尺寸 */
+            height: 60px;
+            background: white;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+            user-select: none;
+        }
+        
+        .card.red {
+            color: red;
+        }
+        
+        .current-trick {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .trick-card {
+            position: absolute;
+            width: 50px;
+            height: 75px;
             background: white;
             border-radius: 5px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 24px;
-            cursor: pointer;
-            transition: transform 0.2s;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            font-size: 20px;
         }
         
-        .card:hover {
-            transform: translateY(-10px);
-        }
-        
-        .card.selected {
-            transform: translateY(-20px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
+        .trick-card.north { top: 0; }
+        .trick-card.east { right: 0; }
+        .trick-card.south { bottom: 0; }
+        .trick-card.west { left: 0; }
     </style>
 </head>
 <body>
     <div class="game-container">
         <div class="table">
-            <div class="player north">北方</div>
-            <div class="player east">东方</div>
-            <div class="player south">南方</div>
-            <div class="player west">西方</div>
-            <div id="cards-north" class="cards-area north"></div>
-            <div id="cards-east" class="cards-area east"></div>
-            <div id="cards-south" class="cards-area south"></div>
-            <div id="cards-west" class="cards-area west"></div>
+            <div class="current-trick">
+                <div id="trick-north" class="trick-card north"></div>
+                <div id="trick-east" class="trick-card east"></div>
+                <div id="trick-south" class="trick-card south"></div>
+                <div id="trick-west" class="trick-card west"></div>
         </div>
         <div class="info-panel">
             <div>当前主牌: <span id="trump">等待叫主</span></div>
