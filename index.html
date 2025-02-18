@@ -2,45 +2,23 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>绚丽烟花秀</title>
+    <title>太空射击</title>
     <style>
         body {
             margin: 0;
-            overflow: hidden;
-            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #222;
         }
         canvas {
-            display: block;
-        }
-        .controls {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 5px;
-            color: white;
-        }
-        button {
-            background: #ff3366;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin: 5px;
-        }
-        button:hover {
-            background: #ff1a4d;
+            border: 2px solid white;
         }
     </style>
 </head>
 <body>
-    <canvas id="canvas"></canvas>
-    <div class="controls">
-        <button onclick="addFirework()">发射烟花</button>
-        <button onclick="toggleAutoLaunch()">自动发射</button>
-    </div>
-    <script src="fireworks.js"></script>
+    <canvas id="gameCanvas"></canvas>
+    <script src="space-shooter.js"></script>
 </body>
 </html>
