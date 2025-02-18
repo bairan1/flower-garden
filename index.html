@@ -8,32 +8,37 @@
             margin: 0;
             background: #1a4d1a;
             font-family: Arial, sans-serif;
-        }
-        
-        .game-container {
-            width: 100vw;
-            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
+            height: 100vh;
+        }
+        
+        .game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
         }
         
         .table {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             width: 800px;
             height: 600px;
             background: #2d662d;
             border-radius: 200px;
-            position: relative;
             border: 20px solid #133913;
             box-shadow: 0 0 50px rgba(0,0,0,0.5);
         }
         
         .player {
             position: absolute;
-            width: 120px;
-            height: 120px;
-            background: #fff;
-            border-radius: 60px;
+            width: 100px;
+            height: 100px;
+            background: white;
+            border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -41,45 +46,22 @@
             box-shadow: 0 0 20px rgba(0,0,0,0.3);
         }
         
-        .player.north { top: -60px; left: 340px; }
-        .player.east { right: -60px; top: 240px; }
-        .player.south { bottom: -60px; left: 340px; }
-        .player.west { left: -60px; top: 240px; }
+        .player.north { top: -50px; left: 350px; }
+        .player.east { right: -50px; top: 250px; }
+        .player.south { bottom: -50px; left: 350px; }
+        .player.west { left: -50px; top: 250px; }
         
         .cards-area {
             position: absolute;
             display: flex;
             gap: 5px;
+            padding: 10px;
         }
         
         .cards-area.north { top: 80px; left: 200px; }
         .cards-area.east { right: 80px; top: 200px; transform: rotate(90deg); }
         .cards-area.south { bottom: 80px; left: 200px; }
         .cards-area.west { left: 80px; top: 200px; transform: rotate(-90deg); }
-        
-        .card {
-            width: 50px;
-            height: 70px;
-            background: white;
-            border-radius: 5px;
-            border: 1px solid #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 16px;
-            cursor: pointer;
-            transition: transform 0.2s;
-            box-shadow: 1px 1px 5px rgba(0,0,0,0.2);
-        }
-        
-        .card:hover {
-            transform: translateY(-10px);
-        }
-        
-        .card.selected {
-            transform: translateY(-20px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
         
         .info-panel {
             position: fixed;
@@ -90,6 +72,34 @@
             padding: 20px;
             border-radius: 10px;
             font-size: 16px;
+            z-index: 100;
+        }
+        
+        .info-panel div {
+            margin: 5px 0;
+        }
+        
+        .card {
+            width: 60px;
+            height: 90px;
+            background: white;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .card:hover {
+            transform: translateY(-10px);
+        }
+        
+        .card.selected {
+            transform: translateY(-20px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
     </style>
 </head>
