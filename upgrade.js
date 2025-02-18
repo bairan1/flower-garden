@@ -346,11 +346,23 @@ class Game {
             }, 1000);
         }
     }
-
+    // 添加事件监听器设置
+    setupEventListeners() {
+        // 监听卡牌点击
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                const playerIndex = parseInt(e.target.dataset.playerIndex);
+                const cardIndex = parseInt(e.target.dataset.cardIndex);
+                this.handleCardClick(playerIndex, cardIndex);
+            });
+        });
+    }
     renderGame() {
         // 渲染玩家手牌
         this.players.forEach((player, index) => {
             const container = document.getElementById(`cards-${['north', 'east', 'south', 'west'][index]}`);
+            if (!container) return;  // 确保元素存在
+            
             container.innerHTML = '';
             
             player.cards.forEach((card, cardIndex) => {
@@ -358,23 +370,22 @@ class Game {
                 cardElement.className = 'card' + (card.isSelected ? ' selected' : '');
                 cardElement.textContent = card.toString();
                 if (['♥', '♦'].includes(card.suit)) {
-                    cardElement.style.color = 'red';
+                    cardElement.classList.add('red');
                 }
+                
+                // 添加数据属性
+                cardElement.dataset.playerIndex = index;
+                cardElement.dataset.cardIndex = cardIndex;
                 
                 // 只有当前玩家的牌可以点击
                 if (index === this.currentPlayer) {
+                    cardElement.style.cursor = 'pointer';
                     cardElement.onclick = () => this.handleCardClick(index, cardIndex);
                 }
                 
                 container.appendChild(cardElement);
             });
         });
-
-        // 更新信息面板
-        document.getElementById('trump').textContent = this.trumpSuit ? `${this.trumpSuit}${this.trumpRank}` : '等待叫主';
-        document.getElementById('current-player').textContent = this.players[this.currentPlayer].name;
-        document.getElementById('score-ns').textContent = this.scores[0];
-        document.getElementById('score-ew').textContent = this.scores[1];
     }
 }
 
