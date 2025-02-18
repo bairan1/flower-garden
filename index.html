@@ -2,47 +2,45 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>梦幻花园装扮</title>
+    <title>绚丽烟花秀</title>
     <style>
         body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: #ffe6f2;
-            font-family: Arial, sans-serif;
+            margin: 0;
+            overflow: hidden;
+            background: #000;
         }
-        #gameCanvas {
-            border: 2px solid #ff99cc;
-            border-radius: 10px;
-            margin: 20px;
+        canvas {
+            display: block;
         }
-        .toolbar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        button {
-            padding: 10px 20px;
-            background-color: #ff99cc;
-            border: none;
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
             border-radius: 5px;
             color: white;
+        }
+        button {
+            background: #ff3366;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
             cursor: pointer;
+            margin: 5px;
         }
         button:hover {
-            background-color: #ff80bf;
+            background: #ff1a4d;
         }
     </style>
 </head>
 <body>
-    <h1>梦幻花园装扮</h1>
-    <div class="toolbar">
-        <button onclick="selectItem('flower1')">幻彩莲花</button>
-        <button onclick="selectItem('flower2')">星光舞者</button>
-        <button onclick="selectItem('flower3')">梦幻水晶</button>
-        <button onclick="clearCanvas()">重新开始</button>
+    <canvas id="canvas"></canvas>
+    <div class="controls">
+        <button onclick="addFirework()">发射烟花</button>
+        <button onclick="toggleAutoLaunch()">自动发射</button>
     </div>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
-    <script src="game.js"></script>
+    <script src="fireworks.js"></script>
 </body>
 </html>
