@@ -51,7 +51,6 @@
         .player.east { right: 10px; top: 310px; }
         .player.south { bottom: 10px; left: 460px; }
         .player.west { left: 10px; top: 310px; }
-        
         .cards-area {
             position: absolute;
             display: flex;
@@ -59,12 +58,10 @@
             padding: 10px;
             z-index: 5;
         }
-        
         .cards-area.north { top: 100px; left: 250px; }
         .cards-area.east { right: 100px; top: 250px; transform: rotate(90deg); transform-origin: right center; }
         .cards-area.south { bottom: 100px; left: 250px; }
         .cards-area.west { left: 100px; top: 250px; transform: rotate(-90deg); transform-origin: left center; }
-        
         .card {
             width: 40px;  /* 减小牌的尺寸 */
             height: 60px;
@@ -79,11 +76,9 @@
             box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
             user-select: none;
         }
-        
         .card.red {
             color: red;
         }
-        
         .current-trick {
             position: absolute;
             top: 50%;
@@ -95,7 +90,6 @@
             justify-content: center;
             align-items: center;
         }
-        
         .trick-card {
             position: absolute;
             width: 50px;
@@ -107,12 +101,10 @@
             align-items: center;
             font-size: 20px;
         }
-        
         .trick-card.north { top: 0; }
         .trick-card.east { right: 0; }
         .trick-card.south { bottom: 0; }
         .trick-card.west { left: 0; }
-        
         /* 添加底牌区域样式 */
         .bottom-cards {
             position: absolute;
@@ -128,7 +120,6 @@
             align-items: center;
             margin-top: -150px;
         }
-        
         /* 添加操作按钮样式 */
         .controls {
             position: absolute;
@@ -138,7 +129,6 @@
             display: flex;
             gap: 10px;
         }
-        
         .btn {
             padding: 10px 20px;
             background: #4CAF50;
@@ -148,11 +138,9 @@
             cursor: pointer;
             font-size: 16px;
         }
-        
         .btn:hover {
             background: #45a049;
         }
-        
         /* 添加提示信息样式 */
         .message {
             position: fixed;
