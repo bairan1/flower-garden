@@ -2,81 +2,130 @@ let canvas = document.getElementById('gameCanvas');
 let ctx = canvas.getContext('2d');
 let selectedItem = null;
 let garden = [];
+let animationFrameId;
+let time = 0;
 
 // 初始化背景
 function initBackground() {
-    ctx.fillStyle = '#90EE90';
+    // 创建渐变背景
+    let gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, '#1a1a3a');
+    gradient.addColorStop(1, '#4a1a4a');
+    ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // 添加星星
+    for(let i = 0; i < 100; i++) {
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.random()})`;
+        ctx.arc(
+            Math.random() * canvas.width,
+            Math.random() * canvas.height,
+            Math.random() * 2,
+            0,
+            Math.PI * 2
+        );
+        ctx.fill();
+    }
 }
 
-// 绘制花朵
-function drawFlower(x, y, type) {
-    ctx.beginPath();
+// 绘制魔法花朵
+function drawFlower(x, y, type, time) {
+    ctx.save();
     
     switch(type) {
-        case 'flower1': // 玫瑰花
-            // 花瓣
-            ctx.fillStyle = '#FF69B4';
-            for(let i = 0; i < 12; i++) {
+        case 'flower1': // 幻彩莲花
+            let petals = 8;
+            let size = 20;
+            let hue = (time * 50) % 360;
+            
+            for(let i = 0; i < petals; i++) {
                 ctx.beginPath();
-                ctx.ellipse(
-                    x + Math.cos(i * Math.PI/6) * 8,
-                    y + Math.sin(i * Math.PI/6) * 8,
-                    6, 4, i * Math.PI/6, 0, Math.PI * 2
+                ctx.fillStyle = `hsla(${hue + i * 45}, 100%, 70%, 0.8)`;
+                ctx.translate(x, y);
+                ctx.rotate((Math.PI * 2 / petals) * i + Math.sin(time) * 0.1);
+                ctx.translate(-x, -y);
+                
+                ctx.beginPath();
+                ctx.moveTo(x, y - size);
+                ctx.quadraticCurveTo(
+                    x + size, y - size,
+                    x, y + size
+                );
+                ctx.quadraticCurveTo(
+                    x - size, y - size,
+                    x, y - size
                 );
                 ctx.fill();
             }
-            // 花蕊
-            ctx.fillStyle = '#FFD700';
+            
+            // 发光效果
             ctx.beginPath();
-            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            let gradient = ctx.createRadialGradient(x, y, 0, x, y, 40);
+            gradient.addColorStop(0, `hsla(${hue}, 100%, 70%, 0.3)`);
+            gradient.addColorStop(1, 'transparent');
+            ctx.fillStyle = gradient;
+            ctx.arc(x, y, 40, 0, Math.PI * 2);
             ctx.fill();
             break;
             
-        case 'flower2': // 向日葵
-            // 花瓣
-            ctx.fillStyle = '#FFD700';
-            for(let i = 0; i < 16; i++) {
+        case 'flower2': // 星光舞者
+            let arms = 12;
+            for(let i = 0; i < arms; i++) {
                 ctx.beginPath();
-                ctx.ellipse(
-                    x + Math.cos(i * Math.PI/8) * 15,
-                    y + Math.sin(i * Math.PI/8) * 15,
-                    8, 3, i * Math.PI/8, 0, Math.PI * 2
+                ctx.strokeStyle = `hsla(${(time * 100 + i * 30) % 360}, 100%, 70%, 0.8)`;
+                ctx.lineWidth = 2;
+                ctx.translate(x, y);
+                ctx.rotate((Math.PI * 2 / arms) * i + time);
+                ctx.translate(-x, -y);
+                
+                let curve = Math.sin(time * 5) * 10;
+                ctx.beginPath();
+                ctx.moveTo(x, y - 15);
+                ctx.quadraticCurveTo(
+                    x + curve, y - 7.5,
+                    x, y
                 );
+                ctx.stroke();
+            }
+            break;
+            
+        case 'flower3': // 梦幻水晶
+            ctx.translate(x, y);
+            ctx.rotate(time);
+            ctx.translate(-x, -y);
+            
+            for(let i = 0; i < 6; i++) {
+                ctx.beginPath();
+                ctx.fillStyle = `hsla(${210 + i * 20}, 80%, 70%, 0.6)`;
+                ctx.translate(x, y);
+                ctx.rotate(Math.PI / 3);
+                ctx.translate(-x, -y);
+                
+                ctx.beginPath();
+                ctx.moveTo(x, y - 20);
+                ctx.lineTo(x + 10, y);
+                ctx.lineTo(x, y + 20);
+                ctx.lineTo(x - 10, y);
+                ctx.closePath();
                 ctx.fill();
             }
-            // 花蕊
-            ctx.fillStyle = '#654321';
-            ctx.beginPath();
-            ctx.arc(x, y, 8, 0, Math.PI * 2);
-            ctx.fill();
-            break;
-            
-        case 'flower3': // 郁金香
-            // 花瓣
-            ctx.fillStyle = '#FF0000';
-            ctx.beginPath();
-            ctx.moveTo(x, y - 15);
-            ctx.bezierCurveTo(x + 15, y - 5, x + 15, y + 10, x, y + 15);
-            ctx.bezierCurveTo(x - 15, y + 10, x - 15, y - 5, x, y - 15);
-            ctx.fill();
-            // 花蕊
-            ctx.fillStyle = '#FFD700';
-            ctx.beginPath();
-            ctx.arc(x, y, 3, 0, Math.PI * 2);
-            ctx.fill();
             break;
     }
+    
+    ctx.restore();
 }
 
-// 移除原来的 getFlowerColor 函数，因为颜色现在直接在 drawFlower 中设置
-function getFlowerColor(type) {
-    switch(type) {
-        case 'flower1': return '#FF69B4'; // 玫瑰花-粉色
-        case 'flower2': return '#FFD700'; // 向日葵-黄色
-        case 'flower3': return '#FF0000'; // 郁金香-红色
-        default: return '#FF69B4';
-    }
+function animate() {
+    time += 0.01;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    initBackground();
+    
+    garden.forEach(flower => {
+        drawFlower(flower.x, flower.y, flower.type, time);
+    });
+    
+    animationFrameId = requestAnimationFrame(animate);
 }
 
 function selectItem(item) {
@@ -100,9 +149,8 @@ canvas.addEventListener('click', function(event) {
         y: y,
         type: selectedItem
     });
-    
-    drawFlower(x, y, selectedItem);
 });
 
 // 初始化游戏
 initBackground();
+animate();
