@@ -36,18 +36,26 @@ class Game {
             new Player('南方', 2),
             new Player('西方', 3, true)
         ];
+        this.currentPlayer = 0;
+        this.currentPhase = 'bidding'; // bidding, playing
         this.trumpSuit = null;
         this.trumpRank = null;
-        this.currentPlayer = 0;
+        this.scores = [0, 0]; // 北南队、东西队的分数
         this.currentTrick = [];
-        this.scores = [0, 0];  // 两队分数
         this.initGame();
+        this.renderGame();
     }
 
     initGame() {
-        // 生成两副牌
+        const deck = this.createDeck();
+        this.dealCards(deck);
+        this.updateUI();
+    }
+
+    createDeck() {
         const deck = [];
         const suits = ['♠', '♥', '♣', '♦'];
+        // 创建两副牌
         for (let i = 0; i < 2; i++) {
             for (let suit of suits) {
                 for (let rank = 1; rank <= 13; rank++) {
@@ -55,36 +63,74 @@ class Game {
                 }
             }
             // 添加大小王
-            deck.push(new Card(null, 16, true));  // 大王
-            deck.push(new Card(null, 15, true));  // 小王
+            deck.push(new Card('', 16, true)); // 大王
+            deck.push(new Card('', 15, true)); // 小王
         }
-        
-        // 洗牌
-        this.shuffle(deck);
-        
-        // 发牌
-        for (let i = 0; i < deck.length; i++) {
-            this.players[i % 4].cards.push(deck[i]);
-        }
-        
-        // 整理手牌
-        this.players.forEach(player => this.sortCards(player.cards));
+        return this.shuffle(deck);
     }
 
-    shuffle(deck) {
-        for (let i = deck.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [deck[i], deck[j]] = [deck[j], deck[i]];
-        }
-    }
-
-    sortCards(cards) {
-        cards.sort((a, b) => {
-            if (a.isJoker && b.isJoker) return b.rank - a.rank;
-            if (a.isJoker) return -1;
-            if (b.isJoker) return 1;
-            if (a.suit === b.suit) return a.rank - b.rank;
-            return ['♠', '♥', '♣', '♦'].indexOf(a.suit) - ['♠', '♥', '♣', '♦'].indexOf(b.suit);
+    renderGame() {
+        // 渲染玩家手牌
+        this.players.forEach((player, index) => {
+            const container = document.getElementById(`cards-${['north', 'east', 'south', 'west'][index]}`);
+            container.innerHTML = '';
+            
+            player.cards.forEach((card, cardIndex) => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'card' + (card.isSelected ? ' selected' : '');
+                cardElement.textContent = card.toString();
+                if (['♥', '♦'].includes(card.suit)) {
+                    cardElement.style.color = 'red';
+                }
+                
+                // 只有当前玩家的牌可以点击
+                if (index === this.currentPlayer) {
+                    cardElement.onclick = () => this.handleCardClick(index, cardIndex);
+                }
+                
+                container.appendChild(cardElement);
+            });
         });
+
+        // 更新信息面板
+        document.getElementById('trump').textContent = this.trumpSuit ? `${this.trumpSuit}${this.trumpRank}` : '等待叫主';
+        document.getElementById('current-player').textContent = this.players[this.currentPlayer].name;
+        document.getElementById('score-ns').textContent = this.scores[0];
+        document.getElementById('score-ew').textContent = this.scores[1];
+    }
+
+    handleCardClick(playerIndex, cardIndex) {
+        const player = this.players[playerIndex];
+        const card = player.cards[cardIndex];
+
+        if (this.currentPhase === 'bidding') {
+            // 叫主阶段
+            if (this.canBid(card)) {
+                this.trumpSuit = card.suit;
+                this.trumpRank = card.rank;
+                this.currentPhase = 'playing';
+                if (card.isJoker) {
+                    player.hiddenCards.push(...player.cards.splice(cardIndex, 1));
+                }
+            }
+        } else {
+            // 出牌阶段
+            if (this.isValidPlay(player, card)) {
+                this.playCard(playerIndex, cardIndex);
+            }
+        }
+
+        this.renderGame();
     }
 }
+
+// 初始化游戏
+const game = new Game();
+
+// 添加键盘控制
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+        // 空格键结束当前回合
+        game.endTrick();
+    }
+});
