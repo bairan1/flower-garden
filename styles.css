@@ -1,0 +1,60 @@
+.game-container {
+    width: 100vw;
+    height: 100vh;
+    background: #1a4d1a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.table {
+    width: 800px;
+    height: 600px;
+    background: #2d662d;
+    border-radius: 200px;
+    position: relative;
+    border: 20px solid #133913;
+    box-shadow: 0 0 50px rgba(0,0,0,0.5);
+}
+
+.player {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+}
+
+.player.current {
+    background: #ffeb3b;
+    transform: scale(1.1);
+}
+
+.card {
+    width: 60px;
+    height: 90px;
+    background: white;
+    border-radius: 5px;
+    margin: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+}
+
+.card:hover {
+    transform: translateY(-10px);
+}
+
+.card.selected {
+    transform: translateY(-20px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
