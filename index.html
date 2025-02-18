@@ -112,23 +112,109 @@
         .trick-card.east { right: 0; }
         .trick-card.south { bottom: 0; }
         .trick-card.west { left: 0; }
+        
+        /* 添加底牌区域样式 */
+        .bottom-cards {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 100px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: -150px;
+        }
+        
+        /* 添加操作按钮样式 */
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .btn:hover {
+            background: #45a049;
+        }
+        
+        /* 添加提示信息样式 */
+        .message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="game-container">
         <div class="table">
+            <!-- 玩家头像 -->
+            <div class="player north">北方</div>
+            <div class="player east">东方</div>
+            <div class="player south">南方</div>
+            <div class="player west">西方</div>
+            
+            <!-- 玩家手牌区域 -->
+            <div id="cards-north" class="cards-area north"></div>
+            <div id="cards-east" class="cards-area east"></div>
+            <div id="cards-south" class="cards-area south"></div>
+            <div id="cards-west" class="cards-area west"></div>
+            
+            <!-- 当前出牌区域 -->
             <div class="current-trick">
                 <div id="trick-north" class="trick-card north"></div>
                 <div id="trick-east" class="trick-card east"></div>
                 <div id="trick-south" class="trick-card south"></div>
                 <div id="trick-west" class="trick-card west"></div>
+            </div>
+            
+            <!-- 底牌区域 -->
+            <div id="bottom-cards" class="bottom-cards">
+                <div>底牌区域</div>
+            </div>
+            
+            <!-- 操作按钮 -->
+            <div class="controls">
+                <button id="call-trump" class="btn">叫主</button>
+                <button id="counter-trump" class="btn">反主</button>
+                <button id="exchange-bottom" class="btn">换底牌</button>
+                <button id="play-cards" class="btn">出牌</button>
+            </div>
         </div>
+        
+        <!-- 信息面板 -->
         <div class="info-panel">
+            <div>当前级别: <span id="level">2</span></div>
             <div>当前主牌: <span id="trump">等待叫主</span></div>
             <div>当前玩家: <span id="current-player">北方</span></div>
             <div>北南队得分: <span id="score-ns">0</span></div>
             <div>东西队得分: <span id="score-ew">0</span></div>
         </div>
+        
+        <!-- 提示信息 -->
+        <div id="message" class="message"></div>
     </div>
     <script src="upgrade.js"></script>
 </body>
