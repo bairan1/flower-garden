@@ -1,156 +1,143 @@
-let canvas = document.getElementById('gameCanvas');
-let ctx = canvas.getContext('2d');
-let selectedItem = null;
-let garden = [];
-let animationFrameId;
-let time = 0;
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
 
-// 初始化背景
-function initBackground() {
-    // 创建渐变背景
-    let gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, '#1a1a3a');
-    gradient.addColorStop(1, '#4a1a4a');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // 添加星星
-    for(let i = 0; i < 100; i++) {
+// 设置画布大小为窗口大小
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// 烟花粒子类
+class Particle {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.velocity = {
+            x: (Math.random() - 0.5) * 8,
+            y: (Math.random() - 0.5) * 8
+        };
+        this.alpha = 1;
+        this.decay = Math.random() * 0.015 + 0.015;
+        this.gravity = 0.2;
+        this.life = 100;
+        this.size = Math.random() * 3 + 2;
+    }
+
+    update() {
+        this.velocity.y += this.gravity;
+        this.x += this.velocity.x;
+        this.y += this.velocity.y;
+        this.alpha -= this.decay;
+        this.life--;
+    }
+
+    draw() {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
         ctx.beginPath();
-        ctx.fillStyle = `rgba(255, 255, 255, ${Math.random()})`;
-        ctx.arc(
-            Math.random() * canvas.width,
-            Math.random() * canvas.height,
-            Math.random() * 2,
-            0,
-            Math.PI * 2
-        );
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
         ctx.fill();
+        ctx.restore();
     }
 }
 
-// 绘制魔法花朵
-function drawFlower(x, y, type, time) {
-    ctx.save();
-    
-    switch(type) {
-        case 'flower1': // 幻彩莲花
-            let petals = 8;
-            let size = 20;
-            let hue = (time * 50) % 360;
-            
-            for(let i = 0; i < petals; i++) {
-                ctx.beginPath();
-                ctx.fillStyle = `hsla(${hue + i * 45}, 100%, 70%, 0.8)`;
-                ctx.translate(x, y);
-                ctx.rotate((Math.PI * 2 / petals) * i + Math.sin(time) * 0.1);
-                ctx.translate(-x, -y);
-                
-                ctx.beginPath();
-                ctx.moveTo(x, y - size);
-                ctx.quadraticCurveTo(
-                    x + size, y - size,
-                    x, y + size
-                );
-                ctx.quadraticCurveTo(
-                    x - size, y - size,
-                    x, y - size
-                );
-                ctx.fill();
+// 烟花类
+class Firework {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.targetY = Math.random() * canvas.height * 0.4;
+        this.velocity = {
+            x: (Math.random() - 0.5) * 2,
+            y: -Math.random() * 15 - 10
+        };
+        this.particles = [];
+        this.exploded = false;
+        this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+    }
+
+    explode() {
+        const particleCount = 150;
+        for (let i = 0; i < particleCount; i++) {
+            this.particles.push(new Particle(this.x, this.y, this.color));
+        }
+    }
+
+    update() {
+        if (!this.exploded) {
+            this.velocity.y += 0.2;
+            this.x += this.velocity.x;
+            this.y += this.velocity.y;
+
+            if (this.y <= this.targetY) {
+                this.explode();
+                this.exploded = true;
             }
-            
-            // 发光效果
+        } else {
+            this.particles.forEach((particle, index) => {
+                particle.update();
+                if (particle.alpha <= 0 || particle.life <= 0) {
+                    this.particles.splice(index, 1);
+                }
+            });
+        }
+    }
+
+    draw() {
+        if (!this.exploded) {
             ctx.beginPath();
-            let gradient = ctx.createRadialGradient(x, y, 0, x, y, 40);
-            gradient.addColorStop(0, `hsla(${hue}, 100%, 70%, 0.3)`);
-            gradient.addColorStop(1, 'transparent');
-            ctx.fillStyle = gradient;
-            ctx.arc(x, y, 40, 0, Math.PI * 2);
+            ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
             ctx.fill();
-            break;
-            
-        case 'flower2': // 星光舞者
-            let arms = 12;
-            for(let i = 0; i < arms; i++) {
-                ctx.beginPath();
-                ctx.strokeStyle = `hsla(${(time * 100 + i * 30) % 360}, 100%, 70%, 0.8)`;
-                ctx.lineWidth = 2;
-                ctx.translate(x, y);
-                ctx.rotate((Math.PI * 2 / arms) * i + time);
-                ctx.translate(-x, -y);
-                
-                let curve = Math.sin(time * 5) * 10;
-                ctx.beginPath();
-                ctx.moveTo(x, y - 15);
-                ctx.quadraticCurveTo(
-                    x + curve, y - 7.5,
-                    x, y
-                );
-                ctx.stroke();
-            }
-            break;
-            
-        case 'flower3': // 梦幻水晶
-            ctx.translate(x, y);
-            ctx.rotate(time);
-            ctx.translate(-x, -y);
-            
-            for(let i = 0; i < 6; i++) {
-                ctx.beginPath();
-                ctx.fillStyle = `hsla(${210 + i * 20}, 80%, 70%, 0.6)`;
-                ctx.translate(x, y);
-                ctx.rotate(Math.PI / 3);
-                ctx.translate(-x, -y);
-                
-                ctx.beginPath();
-                ctx.moveTo(x, y - 20);
-                ctx.lineTo(x + 10, y);
-                ctx.lineTo(x, y + 20);
-                ctx.lineTo(x - 10, y);
-                ctx.closePath();
-                ctx.fill();
-            }
-            break;
+        }
+        this.particles.forEach(particle => particle.draw());
     }
-    
-    ctx.restore();
 }
 
+let fireworks = [];
+let autoLaunch = false;
+let lastLaunch = Date.now();
+
+function addFirework() {
+    const x = Math.random() * canvas.width;
+    const y = canvas.height;
+    fireworks.push(new Firework(x, y));
+}
+
+function toggleAutoLaunch() {
+    autoLaunch = !autoLaunch;
+}
+
+// 动画循环
 function animate() {
-    time += 0.01;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    initBackground();
-    
-    garden.forEach(flower => {
-        drawFlower(flower.x, flower.y, flower.type, time);
+    requestAnimationFrame(animate);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (autoLaunch && Date.now() - lastLaunch > 500) {
+        addFirework();
+        lastLaunch = Date.now();
+    }
+
+    fireworks.forEach((firework, index) => {
+        firework.update();
+        firework.draw();
+        if (firework.exploded && firework.particles.length === 0) {
+            fireworks.splice(index, 1);
+        }
     });
-    
-    animationFrameId = requestAnimationFrame(animate);
 }
 
-function selectItem(item) {
-    selectedItem = item;
-}
-
-function clearCanvas() {
-    garden = [];
-    initBackground();
-}
-
-canvas.addEventListener('click', function(event) {
-    if (!selectedItem) return;
-    
-    const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    
-    garden.push({
-        x: x,
-        y: y,
-        type: selectedItem
-    });
+// 窗口大小改变时调整画布大小
+window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 });
 
-// 初始化游戏
-initBackground();
+// 点击画布发射烟花
+canvas.addEventListener('click', (e) => {
+    fireworks.push(new Firework(e.clientX, canvas.height));
+});
+
+// 开始动画
 animate();
