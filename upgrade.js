@@ -1,19 +1,24 @@
 class Card {
-    constructor(suit, rank, isJoker = false) {
+    constructor(suit, rank) {
         this.suit = suit;
         this.rank = rank;
-        this.isJoker = isJoker;
         this.selected = false;
     }
 
     toString() {
-        if (this.isJoker) {
-            return this.rank === 16 ? '🃏' : '👑';
-        }
-        const ranks = {
-            1: 'A', 11: 'J', 12: 'Q', 13: 'K'
+        const suits = {
+            'spade': '♠',
+            'heart': '♥',
+            'club': '♣',
+            'diamond': '♦'
         };
-        return `${this.suit}${ranks[this.rank] || this.rank}`;
+        const ranks = {
+            1: 'A',
+            11: 'J',
+            12: 'Q',
+            13: 'K'
+        };
+        return `${suits[this.suit]}${ranks[this.rank] || this.rank}`;
     }
 }
 
@@ -22,8 +27,8 @@ class Player {
         this.name = name;
         this.position = position;
         this.cards = [];
-        this.hiddenCards = [];
-        this.team = position % 2;  // 0是北南队，1是东西队
+        this.team = position % 2; // 0是北南队，1是东西队
+        this.tricks = []; // 赢得的牌
     }
 }
 
@@ -35,24 +40,29 @@ class Game {
             new Player('南方', 2),
             new Player('西方', 3)
         ];
-        this.currentPlayer = 0;
-        this.currentPhase = 'bidding'; // bidding, playing
-        this.trumpSuit = null;
-        this.trumpRank = null;
-        this.currentTrick = [];
-        this.scores = [0, 0];
+        this.currentLevel = 2; // 从2开始打
+        this.dealer = 0; // 庄家位置
+        this.currentPlayer = this.dealer; // 当前出牌玩家
+        this.trumpSuit = null; // 主牌花色
+        this.bottomCards = []; // 底牌
+        this.currentTrick = []; // 当前回合打出的牌
+        this.scores = [0, 0]; // 两队分数
+        this.gamePhase = 'dealing'; // dealing, bidding, playing
+        
         this.initGame();
     }
 
     initGame() {
+        // 创建两副牌
         const deck = this.createDeck();
         this.dealCards(deck);
         this.renderGame();
+        this.setupEventListeners();
     }
 
     createDeck() {
         const deck = [];
-        const suits = ['♠', '♥', '♣', '♦'];
+        const suits = ['spade', 'heart', 'club', 'diamond'];
         // 创建两副牌
         for (let i = 0; i < 2; i++) {
             for (let suit of suits) {
@@ -60,8 +70,6 @@ class Game {
                     deck.push(new Card(suit, rank));
                 }
             }
-            deck.push(new Card(null, 16, true)); // 大王
-            deck.push(new Card(null, 15, true)); // 小王
         }
         return this.shuffle(deck);
     }
@@ -75,21 +83,23 @@ class Game {
     }
 
     dealCards(deck) {
-        // 每人27张牌
-        for (let i = 0; i < deck.length; i++) {
+        // 每人25张牌，留8张底牌
+        for (let i = 0; i < deck.length - 8; i++) {
             this.players[i % 4].cards.push(deck[i]);
         }
+        this.bottomCards = deck.slice(deck.length - 8);
+        
         // 整理手牌
         this.players.forEach(player => this.sortCards(player.cards));
     }
 
     sortCards(cards) {
+        const suitOrder = {'spade': 0, 'heart': 1, 'club': 2, 'diamond': 3};
         cards.sort((a, b) => {
-            if (a.isJoker && b.isJoker) return b.rank - a.rank;
-            if (a.isJoker) return -1;
-            if (b.isJoker) return 1;
-            if (a.suit === b.suit) return b.rank - a.rank;
-            return ['♠', '♥', '♣', '♦'].indexOf(a.suit) - ['♠', '♥', '♣', '♦'].indexOf(b.suit);
+            if (a.suit === b.suit) {
+                return b.rank - a.rank;
+            }
+            return suitOrder[a.suit] - suitOrder[b.suit];
         });
     }
 
@@ -101,13 +111,12 @@ class Game {
             
             player.cards.forEach((card, cardIndex) => {
                 const cardElement = document.createElement('div');
-                cardElement.className = 'card' + (card.selected ? ' selected' : '');
+                cardElement.className = `card${card.selected ? ' selected' : ''}`;
                 cardElement.textContent = card.toString();
-                if (['♥', '♦'].includes(card.suit)) {
-                    cardElement.style.color = 'red';
+                if (['heart', 'diamond'].includes(card.suit)) {
+                    cardElement.classList.add('red');
                 }
                 
-                // 只有当前玩家的牌可以点击
                 if (index === this.currentPlayer) {
                     cardElement.onclick = () => this.handleCardClick(index, cardIndex);
                 }
@@ -116,9 +125,18 @@ class Game {
             });
         });
 
+        // 渲染当前出牌
+        this.currentTrick.forEach(play => {
+            const trickCard = document.getElementById(`trick-${['north', 'east', 'south', 'west'][play.player]}`);
+            trickCard.textContent = play.card.toString();
+            if (['heart', 'diamond'].includes(play.card.suit)) {
+                trickCard.classList.add('red');
+            }
+        });
+
         // 更新信息面板
         document.getElementById('trump').textContent = this.trumpSuit ? 
-            `${this.trumpSuit}${this.trumpRank}` : '等待叫主';
+            `${this.trumpSuit}${this.currentLevel}` : '等待叫主';
         document.getElementById('current-player').textContent = 
             this.players[this.currentPlayer].name;
         document.getElementById('score-ns').textContent = this.scores[0];
@@ -129,95 +147,23 @@ class Game {
         const player = this.players[playerIndex];
         const card = player.cards[cardIndex];
 
-        if (this.currentPhase === 'bidding') {
-            // 叫主阶段
-            if (this.canBid(card)) {
-                this.trumpSuit = card.suit;
-                this.trumpRank = card.rank;
-                this.currentPhase = 'playing';
-                if (card.isJoker) {
-                    player.hiddenCards.push(...player.cards.splice(cardIndex, 1));
-                }
-            }
-        } else {
-            // 出牌阶段
-            if (this.isValidPlay(player, card)) {
-                this.playCard(playerIndex, cardIndex);
-            }
+        if (this.gamePhase === 'bidding') {
+            this.handleBidding(player, card);
+        } else if (this.gamePhase === 'playing') {
+            this.handlePlaying(player, card);
         }
 
         this.renderGame();
     }
 
-    canBid(card) {
-        return card.isJoker || [2, 3, 5].includes(card.rank);
-    }
-
-    isValidPlay(player, card) {
-        if (this.currentTrick.length === 0) return true;
-        const firstCard = this.currentTrick[0].card;
-        const hasSameSuit = player.cards.some(c => c.suit === firstCard.suit);
-        return !hasSameSuit || card.suit === firstCard.suit;
-    }
-
-    playCard(playerIndex, cardIndex) {
-        const player = this.players[playerIndex];
-        this.currentTrick.push({
-            player: playerIndex,
-            card: player.cards.splice(cardIndex, 1)[0]
+    setupEventListeners() {
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                this.evaluateTrick();
+            }
         });
-
-        if (this.currentTrick.length === 4) {
-            this.evaluateTrick();
-        } else {
-            this.currentPlayer = (this.currentPlayer + 1) % 4;
-        }
-    }
-
-    evaluateTrick() {
-        let winner = 0;
-        let winningCard = this.currentTrick[0];
-
-        for (let i = 1; i < this.currentTrick.length; i++) {
-            if (this.compareCards(this.currentTrick[i].card, winningCard.card)) {
-                winner = i;
-                winningCard = this.currentTrick[i];
-            }
-        }
-
-        this.scores[this.players[winner].team]++;
-        this.currentTrick = [];
-        this.currentPlayer = winner;
-        this.renderGame();
-    }
-
-    compareCards(card1, card2) {
-        const isTrump1 = card1.isJoker || card1.suit === this.trumpSuit || card1.rank === this.trumpRank;
-        const isTrump2 = card2.isJoker || card2.suit === this.trumpSuit || card2.rank === this.trumpRank;
-
-        if (isTrump1 && !isTrump2) return true;
-        if (!isTrump1 && isTrump2) return false;
-        if (isTrump1 && isTrump2) {
-            if (card1.isJoker && card2.isJoker) return card1.rank > card2.rank;
-            if (card1.isJoker) return true;
-            if (card2.isJoker) return false;
-            return card1.rank > card2.rank;
-        }
-        
-        if (card1.suit === card2.suit) {
-            return card1.rank > card2.rank;
-        }
-        return false;
     }
 }
 
 // 初始化游戏
 const game = new Game();
-
-// 添加键盘控制
-document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space') {
-        // 空格键结束当前回合
-        game.evaluateTrick();
-    }
-});
